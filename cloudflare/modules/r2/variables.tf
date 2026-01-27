@@ -1,0 +1,45 @@
+variable "account_id" {
+  description = "Cloudflare 계정 ID"
+  type        = string
+}
+
+variable "bucket_name" {
+  description = "R2 버킷 이름"
+  type        = string
+}
+
+variable "location" {
+  description = "R2 버킷 위치 (APAC, EEUR, ENAM, WEUR, WNAM)"
+  type        = string
+  default     = "APAC"
+}
+
+variable "cors_allowed_origins" {
+  description = "CORS 허용 오리진"
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "cors_allowed_methods" {
+  description = "CORS 허용 메서드"
+  type        = list(string)
+  default     = ["GET", "PUT", "POST", "DELETE", "HEAD"]
+}
+
+variable "cors_allowed_headers" {
+  description = "CORS 허용 헤더"
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "cors_expose_headers" {
+  description = "CORS 노출 헤더"
+  type        = list(string)
+  default     = ["ETag", "Content-Length", "Content-Type"]
+}
+
+variable "cors_max_age_seconds" {
+  description = "CORS preflight 캐시 시간 (초)"
+  type        = number
+  default     = 3600
+}

@@ -1,0 +1,105 @@
+# Cloudflare Pages 배포 (Direct Upload)
+# 이 파일은 예시입니다. 실제 web 저장소의 .github/workflows/ 에 배치하세요.
+
+name: Deploy Web to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main      # prod 환경 배포
+      - develop   # dev 환경 배포
+    paths:
+      - 'web/**'
+      - '.github/workflows/deploy-web.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'web/**'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+        continue-on-error: true  # 타입 체크 실패해도 계속 진행 (선택사항)
+
+      # 환경별 빌드 설정
+      - name: Set environment variables (dev)
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          echo "PAGES_PROJECT=fabbit-web-dev" >> $GITHUB_ENV
+          echo "PAGES_BRANCH=develop" >> $GITHUB_ENV
+          echo "VITE_API_URL=${{ vars.DEV_API_URL }}" >> $GITHUB_ENV
+
+      - name: Set environment variables (prod)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "PAGES_PROJECT=fabbit-web-prod" >> $GITHUB_ENV
+          echo "PAGES_BRANCH=main" >> $GITHUB_ENV
+          echo "VITE_API_URL=${{ vars.PROD_API_URL }}" >> $GITHUB_ENV
+
+      - name: Set environment variables (preview)
+        if: github.event_name == 'pull_request'
+        run: |
+          # PR은 dev 프로젝트에 preview로 배포
+          echo "PAGES_PROJECT=fabbit-web-dev" >> $GITHUB_ENV
+          echo "PAGES_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "VITE_API_URL=${{ vars.DEV_API_URL }}" >> $GITHUB_ENV
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ env.VITE_API_URL }}
+
+      # Cloudflare Pages에 배포
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ env.PAGES_PROJECT }} --branch=${{ env.PAGES_BRANCH }}
+          workingDirectory: web
+
+      # PR 코멘트로 Preview URL 알림
+      - name: Comment Preview URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const project = process.env.PAGES_PROJECT;
+            const branch = process.env.PAGES_BRANCH;
+            // Cloudflare Pages preview URL 형식
+            const previewUrl = `https://${branch}.${project}.pages.dev`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Preview deployed!\n\n**URL:** ${previewUrl}`
+            });
