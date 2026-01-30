@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: "terraform"
+    directory: "/azure/environments/dev"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "terraform"
+    directory: "/azure/environments/prod"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "terraform"
+    directory: "/cloudflare/environments/dev"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "terraform"
+    directory: "/cloudflare/environments/prod"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "terraform"
+    directory: "/cloudflare/environments/landing"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
