@@ -2,7 +2,7 @@ terraform {
   required_providers {
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
+      version = "~> 5.16"
     }
   }
 }
@@ -17,13 +17,13 @@ resource "cloudflare_pages_project" "this" {
   # source 블록 없음 - Git 연동 사용 안 함
   # build_config 블록 없음 - Cloudflare에서 빌드 안 함
 
-  deployment_configs {
-    production {
+  deployment_configs = {
+    production = {
       compatibility_date    = var.compatibility_date
       environment_variables = var.production_env_vars
     }
 
-    preview {
+    preview = {
       compatibility_date    = var.compatibility_date
       environment_variables = var.preview_env_vars
     }
