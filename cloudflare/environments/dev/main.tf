@@ -64,12 +64,4 @@ module "pages" {
   account_id        = var.cloudflare_account_id
   project_name      = "${local.project}-web-${local.environment}"
   production_branch = "develop"
-
-  production_env_vars = {
-    VITE_API_URL = var.api_url
-  }
-
-  preview_env_vars = {
-    VITE_API_URL = var.api_url
-  }
 }

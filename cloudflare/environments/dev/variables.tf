@@ -27,8 +27,3 @@ variable "cors_allowed_origins" {
   default     = ["http://localhost:5173"]
 }
 
-variable "api_url" {
-  description = "백엔드 API URL"
-  type        = string
-  default     = "http://localhost:8000"
-}

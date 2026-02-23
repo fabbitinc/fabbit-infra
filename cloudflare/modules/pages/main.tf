@@ -17,15 +17,12 @@ resource "cloudflare_pages_project" "this" {
   # source 블록 없음 - Git 연동 사용 안 함
   # build_config 블록 없음 - Cloudflare에서 빌드 안 함
 
-  deployment_configs = {
-    production = {
-      compatibility_date    = var.compatibility_date
-      environment_variables = var.production_env_vars
-    }
+  # 환경 변수는 wrangler pages deploy 시 설정
+  # GitHub Actions에서 빌드 시 VITE_API_URL 등 주입
 
-    preview = {
-      compatibility_date    = var.compatibility_date
-      environment_variables = var.preview_env_vars
-    }
+  # Cloudflare provider v5 버그: Pages 업데이트 시 API 에러
+  # https://github.com/cloudflare/terraform-provider-cloudflare/issues/5146
+  lifecycle {
+    ignore_changes = all
   }
 }

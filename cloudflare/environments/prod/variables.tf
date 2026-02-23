@@ -27,7 +27,3 @@ variable "cors_allowed_origins" {
   default     = []
 }
 
-variable "api_url" {
-  description = "백엔드 API URL"
-  type        = string
-}
