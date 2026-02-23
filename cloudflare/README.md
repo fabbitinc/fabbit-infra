@@ -1,194 +1,174 @@
 # Cloudflare Infrastructure
 
-Cloudflare Pages와 R2를 관리하는 OpenTofu 구성입니다.
+Cloudflare R2, Bulk Redirect를 관리하는 OpenTofu 구성입니다.
+Pages 프로젝트는 Dashboard에서 직접 관리합니다 (Git 연동 포함).
 
 ## 구조
 
 ```
 cloudflare/
-├── modules/                 # 재사용 가능한 모듈 (템플릿)
-│   ├── pages/              # Cloudflare Pages 모듈
-│   └── r2/                 # Cloudflare R2 모듈
-└── environments/           # 환경별 구성
-    ├── dev/                # 개발 환경 (R2 + Pages)
-    ├── prod/               # 프로덕션 환경 (R2 + Pages)
-    └── landing/            # 랜딩 페이지 (Pages만)
+├── modules/              # 재사용 가능한 모듈
+│   └── r2/               # Cloudflare R2 (CORS는 AWS Provider S3 API)
+├── web/                  # dev/prod 공유 코드 (R2)
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── envs/             # 환경별 tfvars, secrets, state
+│       ├── dev.tfvars
+│       ├── dev.secrets.tfvars
+│       ├── prod.tfvars
+│       └── prod.secrets.tfvars
+├── redirects/            # pages.dev → 커스텀 도메인 Bulk Redirect (계정 레벨)
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── envs/
+│       ├── prod.tfvars
+│       └── secrets.tfvars
+└── landing/              # (리소스 없음, 레거시)
 ```
 
 ## 환경별 리소스
 
-| 환경 | 리소스 | 이름 | 용도 |
-|------|--------|------|------|
-| dev | R2 | `fabbit-dev` | 파일 저장소 |
-| dev | Pages | `fabbit-web-dev` | 앱 프론트엔드 |
-| prod | R2 | `fabbit-prod` | 파일 저장소 |
-| prod | Pages | `fabbit-web-prod` | 앱 프론트엔드 |
-| landing | Pages | `fabbit-landing` | 랜딩 페이지 |
+| 환경   | 리소스        | 이름                     | 용도                          |
+| ------ | ------------- | ------------------------ | ----------------------------- |
+| dev    | R2            | `fabbit-dev`             | 파일 저장소                   |
+| prod   | R2            | `fabbit-prod`            | 파일 저장소                   |
+| (계정) | Bulk Redirect | `fabbit_pages_redirects` | pages.dev → 커스텀 도메인 301 |
+
+## Pages 프로젝트 (Dashboard 관리)
+
+Cloudflare provider v5 버그로 `cloudflare_pages_project`의 Git 연동/state 관리가 불안정하여,
+Pages 프로젝트는 Dashboard에서 직접 생성합니다.
+
+| Pages 프로젝트    | GitHub repo      | Production branch |
+| ----------------- | ---------------- | ----------------- |
+| `fabbit-landing`  | `fabbit/landing` | `main`            |
+| `fabbit-web-dev`  | `fabbit/web`     | `dev`             |
+| `fabbit-web-prod` | `fabbit/web`     | `main`            |
+
+### 프로젝트 생성
+
+[Cloudflare Dashboard](https://dash.cloudflare.com/) → Workers & Pages → Create → Pages → Connect to Git
+
+### 빌드 설정
+
+프로젝트 → Settings → Build configuration에서 설정:
+- Build command, Output directory, Root directory, Node 버전 등
+
+### 커스텀 도메인
+
+프로젝트 → Custom domains에서 설정:
+- `fabbit-landing` → `www.fabbitinc.com`
+- `fabbit-web-prod` → `app.fabbitinc.com`
+
+### 환경 변수
+
+프로젝트 → Settings → Environment variables에서 설정:
+- Production / Preview 환경별로 분리 가능
 
 ## 사전 준비
 
-### 1. 필요한 토큰
+### 필요한 토큰
 
-| 토큰 | 용도 | 발급 위치 |
-|------|------|----------|
-| API Token | Pages, R2 생성 | My Profile → API Tokens |
-| Account ID | 계정 식별 | Dashboard 우측 또는 URL |
+| 토큰          | 용도        | 발급 위치                 |
+| ------------- | ----------- | ------------------------- |
+| API Token     | R2 생성     | My Profile → API Tokens   |
+| Account ID    | 계정 식별   | Dashboard 우측 또는 URL   |
 | R2 Access Key | S3 호환 API | R2 → Manage R2 API Tokens |
-| R2 Secret Key | S3 호환 API | R2 토큰 생성 시 |
+| R2 Secret Key | S3 호환 API | R2 토큰 생성 시           |
 
-### 2. API Token 권한
+### API Token 권한
 
-- Account / Cloudflare Pages / Edit
 - Account / Workers R2 Storage / Edit
+- Account / Account Rulesets / Edit (Bulk Redirect용)
 
-## 사용법
-
-### 환경변수 설정
+### secrets.tfvars 설정
 
 ```bash
-export TF_VAR_cloudflare_api_token="your-api-token"
-export TF_VAR_cloudflare_account_id="your-account-id"
-export TF_VAR_r2_access_key_id="your-r2-access-key"
-export TF_VAR_r2_secret_access_key="your-r2-secret-key"
+# cloudflare/web/envs/dev.secrets.tfvars.example 참고
+# cloudflare/redirects/envs/secrets.tfvars.example 참고
 ```
 
-### Dev 환경 배포
+## 초기 배포 순서
+
+### 1. Pages 프로젝트 생성 (Dashboard에서 수동)
+
+위 [Pages 프로젝트 (Dashboard 관리)](#pages-프로젝트-dashboard-관리) 섹션 참고.
+
+### 2. Web (dev) - R2 생성
 
 ```bash
-cd environments/dev
+cd cloudflare/web
 tofu init
-tofu plan
-tofu apply
+tofu plan  -var-file=envs/dev.tfvars -var-file=envs/dev.secrets.tfvars -state=envs/dev.tfstate
+tofu apply -var-file=envs/dev.tfvars -var-file=envs/dev.secrets.tfvars -state=envs/dev.tfstate
 ```
 
-### Prod 환경 배포
+### 3. Web (prod) - R2 생성
 
 ```bash
-cd environments/prod
-tofu init
-tofu plan
-tofu apply
+cd cloudflare/web
+tofu plan  -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/prod.tfstate
+tofu apply -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/prod.tfstate
 ```
 
-### Landing 환경 배포
-
-Landing은 Pages만 사용하므로 R2 토큰 없이 배포 가능합니다.
+### 4. Redirects - Bulk Redirect 생성
 
 ```bash
-cd environments/landing
-export TF_VAR_cloudflare_api_token="your-api-token"
-export TF_VAR_cloudflare_account_id="your-account-id"
+cd cloudflare/redirects
 tofu init
-tofu plan
-tofu apply
+tofu plan  -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/redirects.tfstate
+tofu apply -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/redirects.tfstate
 ```
 
-## 모듈 사용 방식
+- `fabbit-landing.pages.dev` → `https://www.fabbitinc.com` (301)
+- `fabbit-web-prod.pages.dev` → `https://www.fabbitinc.com` (301)
 
-```hcl
-# modules/r2/ 는 템플릿
-# environments/dev/main.tf 에서 호출하며 값 주입
+### 5. R2 출력값 확인 (AWS 배포에 필요)
 
-module "r2_storage" {
-  source      = "../../modules/r2"
-  account_id  = var.cloudflare_account_id
-  bucket_name = "fabbit-dev"        # 환경별로 다른 값
-}
+```bash
+cd cloudflare/web
+tofu output -state=envs/prod.tfstate
 ```
 
-각 환경은 **독립적인 state**를 가지며, 서로 영향을 주지 않습니다.
+## 이후 변경 적용
+
+```bash
+# Web (dev)
+cd cloudflare/web
+tofu plan  -var-file=envs/dev.tfvars -var-file=envs/dev.secrets.tfvars -state=envs/dev.tfstate
+tofu apply -var-file=envs/dev.tfvars -var-file=envs/dev.secrets.tfvars -state=envs/dev.tfstate
+
+# Web (prod)
+cd cloudflare/web
+tofu plan  -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/prod.tfstate
+tofu apply -var-file=envs/prod.tfvars -var-file=envs/prod.secrets.tfvars -state=envs/prod.tfstate
+
+# Redirects
+cd cloudflare/redirects
+tofu plan  -var-file=envs/prod.tfvars -var-file=envs/secrets.tfvars -state=envs/redirects.tfstate
+tofu apply -var-file=envs/prod.tfvars -var-file=envs/secrets.tfvars -state=envs/redirects.tfstate
+```
+
+## 인프라 삭제
+
+```bash
+# Web
+cd cloudflare/web
+tofu destroy -var-file=envs/{env}.tfvars -var-file=envs/{env}.secrets.tfvars -state=envs/{env}.tfstate
+
+# Redirects
+cd cloudflare/redirects
+tofu destroy -var-file=envs/prod.tfvars -var-file=envs/secrets.tfvars -state=envs/redirects.tfstate
+```
 
 ## 배포 후 URL
 
-| 프로젝트 | URL |
-|---------|-----|
-| 앱 (dev) | `fabbit-web-dev.pages.dev` |
-| 앱 (prod) | `fabbit-web-prod.pages.dev` |
-| 랜딩 | `fabbit-landing.pages.dev` |
+| 프로젝트  | pages.dev                   | 커스텀 도메인       |
+| --------- | --------------------------- | ------------------- |
+| 랜딩      | `fabbit-landing.pages.dev`  | `www.fabbitinc.com` |
+| 앱 (dev)  | `fabbit-web-dev.pages.dev`  | -                   |
+| 앱 (prod) | `fabbit-web-prod.pages.dev` | `app.fabbitinc.com` |
 
-## 커스텀 도메인 연결
-
-Cloudflare Dashboard에서 Pages 프로젝트 → Custom domains에서 설정:
-
-- `app.fabbitinc.com` → fabbit-web-prod
-- `fabbitinc.com` → fabbit-landing
-
-## 비용 정리
-
-### Cloudflare Pages
-
-#### 호스팅 (정적 에셋 서빙)
-
-모든 플랜에서 **대역폭 무제한, 요청 수 무제한**으로 호스팅 자체는 무료입니다.
-
-| 항목 | Free | Pro ($20/월) |
-|------|------|-------------|
-| 프로젝트 수 | 100개 | 100개 |
-| 정적 파일 수 | 사이트당 20,000개 | 사이트당 100,000개 |
-| 단일 파일 최대 크기 | 25 MiB | 25 MiB |
-| 커스텀 도메인 | 프로젝트당 100개 | 프로젝트당 250개 |
-
-#### 빌드 (계정당 한도)
-
-빌드 한도는 프로젝트당이 아닌 **계정 전체**에 적용됩니다.
-
-| 항목 | Free | Paid |
-|------|------|------|
-| 월 빌드 횟수 | 500회 | 5,000회 |
-| 동시 빌드 | 1개 | 6개 |
-| 빌드 타임아웃 | 20분/회 | 20분/회 |
-| 빌드 환경 | 2 vCPU / 8 GB | 4 vCPU / 8 GB |
-
-#### 빌드 전략: GitHub Actions vs Pages 자체 빌드
-
-| 비교 항목 | GitHub Actions (private repo) | Cloudflare Pages 자체 빌드 |
-|----------|------------------------------|--------------------------|
-| 월 빌드 한도 | 2,000분 (Free) / 3,000분 (Pro) | 500회 (계정당) |
-| 초과 비용 | Linux $0.008/분 | Paid 플랜 전환 필요 ($20/월) |
-| 동시 빌드 | 최대 20개 | 1개 |
-| 빌드 환경 제어 | 완전 자유 (OS, Node 버전, 캐시 등) | 제한적 |
-| 배포 방식 | Wrangler CLI로 Direct Upload | Git 연동 자동 배포 |
-
-> **권장**: GitHub Actions에서 빌드 후 Wrangler CLI로 배포 (현재 방식)
-> - 빌드 환경 완전 제어 가능 (Node 버전, 캐시 등)
-> - Pages의 빌드 한도(계정당 500회)를 소비하지 않음
-> - private repo 기준 월 2,000분 무료 (빌드 1회 약 3분 가정 시 월 ~660회 가능)
-> - 초과 시에도 Linux $0.008/분으로 저렴
-
-### Cloudflare R2
-
-#### 무료 티어 (매월 자동 적용)
-
-- 저장 용량: 10 GB
-- Class A 작업 (쓰기): 1,000,000회
-- Class B 작업 (읽기): 10,000,000회
-- **이그레스: 무제한 무료** (AWS S3 대비 최대 장점)
-
-#### 유료 구간 (무료 초과분)
-
-| 항목 | Standard | Infrequent Access |
-|------|----------|-------------------|
-| 저장 비용 | $0.015 / GB-월 | $0.01 / GB-월 |
-| Class A 작업 (쓰기) | $4.50 / 백만 요청 | $9.00 / 백만 요청 |
-| Class B 작업 (읽기) | $0.36 / 백만 요청 | $0.90 / 백만 요청 |
-| 이그레스 | **무료** | **무료** |
-
-### 네트워크 비용
-
-Cloudflare는 모든 플랜에서 **CDN 대역폭 무제한 무료**입니다. GB당 전송 요금이 없습니다.
-
-| 항목 | 비용 |
-|------|------|
-| CDN 대역폭 | 무료 (무제한) |
-| Pages 대역폭 | 무료 (무제한) |
-| R2 이그레스 | 무료 (무제한) |
-| DDoS 보호 | 기본 제공 |
-
-### Fabbit 예상 비용 (초기 단계)
-
-현재 사용 규모 기준, **Cloudflare 측 비용은 $0** (전액 무료 티어 내)
-
-- Pages 호스팅: 무료 (대역폭 무제한)
-- Pages 빌드: 미사용 (GitHub Actions으로 대체)
-- R2 저장소: 10 GB 이내 무료
-- 네트워크: 무료
+커스텀 도메인은 Cloudflare Dashboard → Pages → Custom domains에서 설정합니다.

@@ -12,3 +12,8 @@ output "s3_endpoint" {
   description = "S3 호환 API 엔드포인트"
   value       = "https://${var.account_id}.r2.cloudflarestorage.com"
 }
+
+output "public_url" {
+  description = "R2 퍼블릭 액세스 URL"
+  value       = var.custom_domain != null ? "https://${var.custom_domain}" : null
+}

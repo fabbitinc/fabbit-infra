@@ -16,6 +16,7 @@ override.tf.json
 *.key
 secrets.tfvars
 secrets.auto.tfvars
+*.secrets.tfvars
 
 # IDE
 .idea/

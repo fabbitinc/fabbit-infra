@@ -34,3 +34,13 @@ resource "aws_s3_bucket_cors_configuration" "this" {
 
   depends_on = [cloudflare_r2_bucket.this]
 }
+
+# R2 커스텀 도메인을 통한 퍼블릭 액세스
+resource "cloudflare_r2_custom_domain" "this" {
+  count       = var.custom_domain != null ? 1 : 0
+  account_id  = var.account_id
+  bucket_name = cloudflare_r2_bucket.this.name
+  domain      = var.custom_domain
+  zone_id     = var.zone_id
+  enabled     = true
+}
