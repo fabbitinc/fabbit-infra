@@ -1,5 +1,24 @@
 locals {
   name_prefix = "${var.project}-${var.environment}"
+
+  # https://www.cloudflare.com/ips-v4/
+  cloudflare_ipv4_cidrs = [
+    "173.245.48.0/20",
+    "103.21.244.0/22",
+    "103.22.200.0/22",
+    "103.31.4.0/22",
+    "141.101.64.0/18",
+    "108.162.192.0/18",
+    "190.93.240.0/20",
+    "188.114.96.0/20",
+    "197.234.240.0/22",
+    "198.41.128.0/17",
+    "162.158.0.0/15",
+    "104.16.0.0/13",
+    "104.24.0.0/14",
+    "172.64.0.0/13",
+    "131.0.72.0/22",
+  ]
 }
 
 # Security Group — 인바운드: SSH, HTTP, HTTPS / 아웃바운드: 전체 허용
@@ -33,22 +52,15 @@ resource "aws_vpc_security_group_ingress_rule" "ssh_extra" {
   cidr_ipv4         = var.ssh_allowed_cidrs[count.index + 1]
 }
 
-resource "aws_vpc_security_group_ingress_rule" "http" {
+# HTTP — Cloudflare Proxy IP만 허용 (Flexible SSL: Cloudflare → EC2는 HTTP)
+resource "aws_vpc_security_group_ingress_rule" "http_cloudflare" {
+  for_each          = toset(local.cloudflare_ipv4_cidrs)
   security_group_id = aws_security_group.this.id
-  description       = "HTTP"
+  description       = "HTTP from Cloudflare"
   from_port         = 80
   to_port           = 80
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "https" {
-  security_group_id = aws_security_group.this.id
-  description       = "HTTPS"
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
+  cidr_ipv4         = each.value
 }
 
 resource "aws_vpc_security_group_egress_rule" "all" {
