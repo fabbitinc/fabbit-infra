@@ -47,3 +47,14 @@ variable "r2_custom_domain" {
   type        = string
   default     = null
 }
+
+# Worker 설정
+variable "domain" {
+  description = "Cloudflare Zone 도메인 (예: fabbitinc.com)"
+  type        = string
+}
+
+variable "pages_origin" {
+  description = "Pages 프록시 오리진 URL (예: https://fabbit-web.pages.dev)"
+  type        = string
+}

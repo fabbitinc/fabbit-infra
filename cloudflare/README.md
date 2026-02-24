@@ -9,8 +9,9 @@ Pages 프로젝트는 Dashboard에서 직접 관리합니다 (Git 연동 포함)
 cloudflare/
 ├── modules/              # 재사용 가능한 모듈
 │   └── r2/               # Cloudflare R2 (CORS는 AWS Provider S3 API)
-├── web/                  # dev/prod 공유 코드 (R2)
+├── web/                  # dev/prod 공유 코드 (R2 + Worker)
 │   ├── main.tf
+│   ├── worker.js         # Worker 스크립트 (서브도메인 라우터)
 │   ├── variables.tf
 │   ├── outputs.tf
 │   └── envs/             # 환경별 tfvars, secrets, state
@@ -34,6 +35,7 @@ cloudflare/
 | ------ | ------------- | ------------------------ | ----------------------------- |
 | dev    | R2            | `fabbit-dev`             | 파일 저장소                   |
 | prod   | R2            | `fabbit-prod`            | 파일 저장소                   |
+| prod   | Worker        | `fabbit-worker-prod`     | 멀티테넌트 서브도메인 라우터  |
 | (계정) | Bulk Redirect | `fabbit_pages_redirects` | pages.dev → 커스텀 도메인 301 |
 
 ## Pages 프로젝트 (Dashboard 관리)
@@ -67,6 +69,24 @@ Pages 프로젝트는 Dashboard에서 직접 생성합니다.
 프로젝트 → Settings → Environment variables에서 설정:
 - Production / Preview 환경별로 분리 가능
 
+## Worker (멀티테넌트 서브도메인 라우터)
+
+Cloudflare Pages는 와일드카드 커스텀 도메인을 지원하지 않으므로 (Enterprise 전용),
+Worker가 `*.fabbitinc.com` 요청을 받아 Pages SPA를 프록시 서빙합니다.
+
+### 동작 방식
+
+1. `{org-slug}.fabbitinc.com` 요청 → Worker가 `fabbit-web.pages.dev`에서 SPA fetch
+2. 예약 서브도메인(`www`, `app`, `api`, `api-dev`, `cdn`) → passthrough (기존 서비스 유지)
+3. 404 + 확장자 없는 경로 → `/index.html` 반환 (SPA 클라이언트 라우팅)
+
+### DNS 충돌 방지
+
+- 구체적 DNS 레코드(`api`, `www`, `cdn`)가 와일드카드(`*`)보다 항상 우선
+- Worker 내부에서도 `RESERVED_SUBDOMAINS` Set으로 이중 보호
+
+Worker는 `cloudflare/web/` 배포에 포함됩니다 (`make web-plan ENV=prod`).
+
 ## 사전 준비
 
 ### 필요한 토큰
@@ -81,7 +101,10 @@ Pages 프로젝트는 Dashboard에서 직접 생성합니다.
 ### API Token 권한
 
 - Account / Workers R2 Storage / Edit
+- Account / Workers Scripts / Edit (Worker 배포용)
 - Account / Account Rulesets / Edit (Bulk Redirect용)
+- Zone / Workers Routes / Edit (Worker 라우트용)
+- Zone / DNS / Edit (와일드카드 DNS용)
 
 ### secrets.tfvars 설정
 

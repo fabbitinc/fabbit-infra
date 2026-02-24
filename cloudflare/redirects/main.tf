@@ -40,20 +40,6 @@ resource "cloudflare_list_item" "redirect_landing" {
   }
 }
 
-resource "cloudflare_list_item" "redirect_web_prod" {
-  account_id = var.cloudflare_account_id
-  list_id    = cloudflare_list.pages_redirects.id
-
-  redirect = {
-    source_url            = "https://${local.project}-web.pages.dev/"
-    target_url            = "https://www.${var.domain}"
-    status_code           = 301
-    include_subdomains    = true
-    subpath_matching      = true
-    preserve_path_suffix  = true
-    preserve_query_string = true
-  }
-}
 
 resource "cloudflare_ruleset" "pages_redirect_rule" {
   account_id  = var.cloudflare_account_id
