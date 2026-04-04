@@ -1,24 +1,7 @@
-terraform {
-  required_version = ">= 1.6.0"
+# pages.dev → 커스텀 도메인 Bulk Redirect (prod만)
 
-  required_providers {
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 5.16"
-    }
-  }
-}
-
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
-}
-
-locals {
-  project = "fabbit"
-}
-
-# pages.dev → 커스텀 도메인 Bulk Redirect
 resource "cloudflare_list" "pages_redirects" {
+  count       = var.environment == "prod" ? 1 : 0
   account_id  = var.cloudflare_account_id
   name        = "${local.project}_pages_redirects"
   description = "Pages.dev → 커스텀 도메인 리다이렉트"
@@ -26,12 +9,13 @@ resource "cloudflare_list" "pages_redirects" {
 }
 
 resource "cloudflare_list_item" "redirect_landing" {
+  count      = var.environment == "prod" ? 1 : 0
   account_id = var.cloudflare_account_id
-  list_id    = cloudflare_list.pages_redirects.id
+  list_id    = cloudflare_list.pages_redirects[0].id
 
   redirect = {
     source_url            = "https://${local.project}-landing.pages.dev/"
-    target_url            = "https://www.${var.domain}"
+    target_url            = "https://www.${var.landing_domain}"
     status_code           = 301
     include_subdomains    = true
     subpath_matching      = true
@@ -40,8 +24,8 @@ resource "cloudflare_list_item" "redirect_landing" {
   }
 }
 
-
 resource "cloudflare_ruleset" "pages_redirect_rule" {
+  count       = var.environment == "prod" ? 1 : 0
   account_id  = var.cloudflare_account_id
   name        = "${local.project}_pages_redirect_rule"
   description = "Pages.dev 리다이렉트 활성화"

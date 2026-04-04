@@ -23,3 +23,9 @@ variable "ssh_allowed_cidrs" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "iam_instance_profile_name" {
+  description = "IAM Instance Profile 이름 (없으면 미연결)"
+  type        = string
+  default     = null
+}
