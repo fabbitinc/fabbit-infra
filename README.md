@@ -14,7 +14,7 @@
 infra/
 ├── live/
 │   └── prod/
-│       ├── edge/       # S3 + CloudFront + ACM + Cloudflare DNS
+│       ├── edge/       # S3 + CloudFront + ACM + Cloudflare DNS + GitHub OIDC deploy role
 │       └── storage/    # Cloudflare R2
 ├── modules/
 │   ├── aws/
@@ -33,11 +33,14 @@ infra/
 
 - 역할: 웹 자산 전달, TLS, CDN, DNS 라우팅
 - 리소스:
-  - prod: S3, CloudFront, ACM, Cloudflare DNS
+  - prod: S3, CloudFront, ACM, Cloudflare DNS, GitHub Actions OIDC IAM role
 - 도메인 정책:
   - `fabbitinc.com`, `www.fabbitinc.com` -> landing
   - `fabbit.app`, `*.fabbit.app` -> web
   - `api.fabbit.app` -> `193.122.102.209` (OCI Dokploy)
+- 캐시 정책:
+  - CloudFront는 최신 `cache_policy_id` 기반 설정을 사용합니다
+  - `index.html`은 no-cache, 나머지 정적 자산은 장기 캐시를 전제로 배포합니다
 
 ### storage
 
@@ -65,6 +68,8 @@ tofu init
 tofu plan
 tofu apply
 ```
+
+apply 후 `github_actions_role_arn` output을 GitHub repo secret `AWS_ROLE_TO_ASSUME`에 넣습니다.
 
 ## 상태와 시크릿
 

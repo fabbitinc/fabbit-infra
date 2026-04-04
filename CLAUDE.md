@@ -43,6 +43,8 @@ tofu apply
 - 예전 flat root Terraform 파일은 제거했습니다
 - 예전 EC2 / Worker / Pages / Redirect / SES 코드는 현재 구조에 포함되지 않습니다
 - `live/prod/edge`는 S3 + CloudFront + ACM + Cloudflare DNS를 같이 관리합니다
+- `live/prod/edge`는 GitHub Actions OIDC 배포용 IAM role도 같이 관리합니다
+- CloudFront는 legacy `forwarded_values` 대신 최신 cache policy를 사용합니다
 - `fabbit.app`와 `*.fabbit.app`는 같은 web distribution으로 연결합니다
 - `api.fabbit.app`는 wildcard 예외로 OCI Dokploy 서버 `193.122.102.209`를 가리킵니다
 - `live/prod/storage`는 별도 `app_zone_id` 없이 `fabbit_app_zone_id`를 재사용합니다

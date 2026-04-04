@@ -27,3 +27,13 @@ output "web_distribution_id" {
   description = "web CloudFront distribution ID입니다."
   value       = module.web.distribution_id
 }
+
+output "github_actions_role_arn" {
+  description = "GitHub Actions에서 AWS OIDC로 assume할 IAM role ARN입니다."
+  value       = module.github_actions_deploy_role.role_arn
+}
+
+output "github_actions_role_name" {
+  description = "GitHub Actions에서 AWS OIDC로 assume할 IAM role 이름입니다."
+  value       = module.github_actions_deploy_role.role_name
+}

@@ -112,6 +112,18 @@ module "web" {
   tags                = merge(local.common_tags, { Service = "web" })
 }
 
+module "github_actions_deploy_role" {
+  source = "../../../modules/aws/github_actions_deploy_role"
+
+  role_name        = var.github_actions_role_name
+  allowed_subjects = var.github_actions_allowed_subjects
+  bucket_arns = [
+    module.landing.bucket_arn,
+    module.web.bucket_arn,
+  ]
+  tags = merge(local.common_tags, { Service = "edge-deploy" })
+}
+
 resource "cloudflare_dns_record" "landing_apex" {
   zone_id = var.fabbitinc_com_zone_id
   name    = "fabbitinc.com"

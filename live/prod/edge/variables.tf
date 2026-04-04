@@ -49,3 +49,17 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "github_actions_role_name" {
+  description = "GitHub Actions 배포용 IAM role 이름입니다."
+  type        = string
+  default     = "github-actions-fabbit-web-deploy"
+}
+
+variable "github_actions_allowed_subjects" {
+  description = "이 역할을 assume할 수 있는 GitHub OIDC subject 목록입니다."
+  type        = list(string)
+  default = [
+    "repo:fabbitinc/fabbit-web:ref:refs/heads/release",
+  ]
+}
