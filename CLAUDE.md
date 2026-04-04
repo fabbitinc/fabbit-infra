@@ -14,7 +14,7 @@
 ## 현재 스택
 
 - `live/prod/storage`: Cloudflare R2 prod
-- `live/prod/frontend`: AWS frontend prod
+- `live/prod/edge`: AWS edge prod
 
 ## 현재 모듈
 
@@ -31,8 +31,8 @@ tofu init
 tofu plan
 tofu apply
 
-# Prod frontend
-cd live/prod/frontend
+# Prod edge
+cd live/prod/edge
 tofu init
 tofu plan
 tofu apply
@@ -42,8 +42,7 @@ tofu apply
 
 - 예전 flat root Terraform 파일은 제거했습니다
 - 예전 EC2 / Worker / Pages / Redirect / SES 코드는 현재 구조에 포함되지 않습니다
-- `live/prod/frontend`는 S3 + CloudFront + ACM + Cloudflare DNS를 같이 관리합니다
-- `www.fabbitinc.com`은 CloudFront Function으로 `fabbitinc.com`에 301 redirect합니다
+- `live/prod/edge`는 S3 + CloudFront + ACM + Cloudflare DNS를 같이 관리합니다
 - `fabbit.app`와 `*.fabbit.app`는 같은 web distribution으로 연결합니다
 - `api.fabbit.app`는 wildcard 예외로 OCI Dokploy 서버 `193.122.102.209`를 가리킵니다
 - `live/prod/storage`는 별도 `app_zone_id` 없이 `fabbit_app_zone_id`를 재사용합니다

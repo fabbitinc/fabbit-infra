@@ -1,3 +1,29 @@
+locals {
+  landing_certificate_validation_records = {
+    for domain_name, record in module.landing_certificate.validation_records :
+    domain_name => {
+      name  = trimsuffix(record.name, ".")
+      type  = record.type
+      value = trimsuffix(record.value, ".")
+    }
+  }
+
+  web_certificate_validation_records = contains(keys(module.web_certificate.validation_records), "*.fabbit.app") ? {
+    "*.fabbit.app" = {
+      name  = trimsuffix(module.web_certificate.validation_records["*.fabbit.app"].name, ".")
+      type  = module.web_certificate.validation_records["*.fabbit.app"].type
+      value = trimsuffix(module.web_certificate.validation_records["*.fabbit.app"].value, ".")
+    }
+    } : {
+    for domain_name, record in module.web_certificate.validation_records :
+    domain_name => {
+      name  = trimsuffix(record.name, ".")
+      type  = record.type
+      value = trimsuffix(record.value, ".")
+    }
+  }
+}
+
 module "landing_certificate" {
   source = "../../../modules/aws/acm_certificate"
 
@@ -11,7 +37,7 @@ module "landing_certificate" {
 }
 
 resource "cloudflare_dns_record" "landing_certificate_validation" {
-  for_each = module.landing_certificate.validation_records
+  for_each = local.landing_certificate_validation_records
 
   zone_id = var.fabbitinc_com_zone_id
   name    = each.value.name
@@ -25,7 +51,7 @@ resource "aws_acm_certificate_validation" "landing" {
   provider = aws.us_east_1
 
   certificate_arn         = module.landing_certificate.certificate_arn
-  validation_record_fqdns = [for record in module.landing_certificate.validation_records : record.name]
+  validation_record_fqdns = [for record in values(local.landing_certificate_validation_records) : record.name]
 
   depends_on = [cloudflare_dns_record.landing_certificate_validation]
 }
@@ -43,7 +69,7 @@ module "web_certificate" {
 }
 
 resource "cloudflare_dns_record" "web_certificate_validation" {
-  for_each = module.web_certificate.validation_records
+  for_each = local.web_certificate_validation_records
 
   zone_id = var.fabbit_app_zone_id
   name    = each.value.name
@@ -57,7 +83,7 @@ resource "aws_acm_certificate_validation" "web" {
   provider = aws.us_east_1
 
   certificate_arn         = module.web_certificate.certificate_arn
-  validation_record_fqdns = [for record in module.web_certificate.validation_records : record.name]
+  validation_record_fqdns = [for record in values(local.web_certificate_validation_records) : record.name]
 
   depends_on = [cloudflare_dns_record.web_certificate_validation]
 }
@@ -69,9 +95,7 @@ module "landing" {
   aliases             = ["fabbitinc.com", "www.fabbitinc.com"]
   acm_certificate_arn = aws_acm_certificate_validation.landing.certificate_arn
   single_page_app     = false
-  redirect_hostnames  = ["www.fabbitinc.com"]
-  redirect_to_host    = "fabbitinc.com"
-  comment             = "Fabbit prod landing"
+  comment             = "Fabbit prod landing edge"
   price_class         = var.price_class
   tags                = merge(local.common_tags, { Service = "landing" })
 }
@@ -83,7 +107,7 @@ module "web" {
   aliases             = ["fabbit.app", "*.fabbit.app"]
   acm_certificate_arn = aws_acm_certificate_validation.web.certificate_arn
   single_page_app     = true
-  comment             = "Fabbit prod web"
+  comment             = "Fabbit prod web edge"
   price_class         = var.price_class
   tags                = merge(local.common_tags, { Service = "web" })
 }

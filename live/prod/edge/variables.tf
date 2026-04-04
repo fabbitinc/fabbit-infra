@@ -23,19 +23,19 @@ variable "fabbitinc_com_zone_id" {
 variable "landing_bucket_name" {
   description = "landing 정적 자산용 S3 버킷 이름입니다."
   type        = string
-  default     = "fabbit-prod-landing-frontend"
+  default     = "fabbit-prod-landing-edge"
 }
 
 variable "web_bucket_name" {
   description = "web 정적 자산용 S3 버킷 이름입니다."
   type        = string
-  default     = "fabbit-prod-web-frontend"
+  default     = "fabbit-prod-web-edge"
 }
 
 variable "price_class" {
   description = "CloudFront price class입니다."
   type        = string
-  default     = "PriceClass_200"
+  default     = "PriceClass_100"
 }
 
 variable "api_origin_ip" {

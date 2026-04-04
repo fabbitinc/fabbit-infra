@@ -27,18 +27,6 @@ variable "single_page_app" {
   default     = true
 }
 
-variable "redirect_hostnames" {
-  description = "지정한 호스트 요청을 canonical 도메인으로 리다이렉트합니다."
-  type        = list(string)
-  default     = []
-}
-
-variable "redirect_to_host" {
-  description = "redirect_hostnames를 보낼 canonical 호스트입니다."
-  type        = string
-  default     = null
-}
-
 variable "comment" {
   description = "CloudFront distribution 설명입니다."
   type        = string
@@ -48,7 +36,7 @@ variable "comment" {
 variable "price_class" {
   description = "CloudFront price class입니다."
   type        = string
-  default     = "PriceClass_200"
+  default     = "PriceClass_100"
 }
 
 variable "enable_ipv6" {

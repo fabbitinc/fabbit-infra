@@ -14,7 +14,7 @@
 infra/
 ├── live/
 │   └── prod/
-│       ├── frontend/   # S3 + CloudFront + ACM + Cloudflare DNS
+│       ├── edge/       # S3 + CloudFront + ACM + Cloudflare DNS
 │       └── storage/    # Cloudflare R2
 ├── modules/
 │   ├── aws/
@@ -29,14 +29,13 @@ infra/
 
 ## 스택 경계
 
-### frontend
+### edge
 
-- 역할: 정적 프런트 배포
+- 역할: 웹 자산 전달, TLS, CDN, DNS 라우팅
 - 리소스:
   - prod: S3, CloudFront, ACM, Cloudflare DNS
 - 도메인 정책:
   - `fabbitinc.com`, `www.fabbitinc.com` -> landing
-  - `www.fabbitinc.com` -> `fabbitinc.com` 301 redirect
   - `fabbit.app`, `*.fabbit.app` -> web
   - `api.fabbit.app` -> `193.122.102.209` (OCI Dokploy)
 
@@ -58,10 +57,10 @@ tofu plan
 tofu apply
 ```
 
-### Prod frontend
+### Prod edge
 
 ```bash
-cd live/prod/frontend
+cd live/prod/edge
 tofu init
 tofu plan
 tofu apply
@@ -101,9 +100,9 @@ pnpm wrangler whoami
 반복 명령은 `Makefile`로 실행합니다.
 
 ```bash
-make init-prod-frontend
-make plan-prod-frontend
-make apply-prod-frontend
+make init-prod-edge
+make plan-prod-edge
+make apply-prod-edge
 
 make init-prod-storage
 make plan-prod-storage

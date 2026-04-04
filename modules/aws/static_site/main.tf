@@ -9,7 +9,6 @@ terraform {
 
 locals {
   use_custom_certificate = var.acm_certificate_arn != null && length(var.aliases) > 0
-  redirect_enabled       = var.redirect_to_host != null && length(var.redirect_hostnames) > 0
   origin_id              = "s3-${var.bucket_name}"
 }
 
@@ -53,62 +52,6 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_cloudfront_function" "canonical_redirect" {
-  count = local.redirect_enabled ? 1 : 0
-
-  name    = replace("${var.bucket_name}-canonical-redirect", ".", "-")
-  runtime = "cloudfront-js-2.0"
-  comment = "호스트 canonical redirect"
-  publish = true
-  code    = <<-EOT
-    function buildQuerystring(querystring) {
-      var keys = Object.keys(querystring);
-      if (keys.length === 0) {
-        return "";
-      }
-
-      var pairs = [];
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var item = querystring[key];
-
-        if (item.multiValue) {
-          for (var j = 0; j < item.multiValue.length; j++) {
-            var multi = item.multiValue[j];
-            pairs.push(encodeURIComponent(key) + "=" + encodeURIComponent(multi.value || ""));
-          }
-          continue;
-        }
-
-        pairs.push(encodeURIComponent(key) + "=" + encodeURIComponent(item.value || ""));
-      }
-
-      return "?" + pairs.join("&");
-    }
-
-    function handler(event) {
-      var request = event.request;
-      var hostHeader = request.headers.host;
-      var host = hostHeader ? hostHeader.value : "";
-      var redirectHosts = ${jsonencode(var.redirect_hostnames)};
-
-      if (redirectHosts.indexOf(host) === -1) {
-        return request;
-      }
-
-      return {
-        statusCode: 301,
-        statusDescription: "Moved Permanently",
-        headers: {
-          location: {
-            value: "https://${var.redirect_to_host}" + request.uri + buildQuerystring(request.querystring)
-          }
-        }
-      };
-    }
-  EOT
-}
-
 resource "aws_cloudfront_distribution" "this" {
   enabled             = true
   is_ipv6_enabled     = var.enable_ipv6
@@ -136,15 +79,6 @@ resource "aws_cloudfront_distribution" "this" {
 
       cookies {
         forward = "none"
-      }
-    }
-
-    dynamic "function_association" {
-      for_each = local.redirect_enabled ? [aws_cloudfront_function.canonical_redirect[0]] : []
-
-      content {
-        event_type   = "viewer-request"
-        function_arn = function_association.value.arn
       }
     }
   }
