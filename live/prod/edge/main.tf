@@ -94,7 +94,7 @@ module "landing" {
   bucket_name         = var.landing_bucket_name
   aliases             = ["fabbitinc.com", "www.fabbitinc.com"]
   acm_certificate_arn = aws_acm_certificate_validation.landing.certificate_arn
-  single_page_app     = false
+  single_page_app     = true
   comment             = "Fabbit prod landing edge"
   price_class         = var.price_class
   tags                = merge(local.common_tags, { Service = "landing" })

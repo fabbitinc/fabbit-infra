@@ -35,7 +35,7 @@ variable "web_bucket_name" {
 variable "price_class" {
   description = "CloudFront price class입니다."
   type        = string
-  default     = "PriceClass_100"
+  default     = "PriceClass_All"
 }
 
 variable "api_origin_ip" {
