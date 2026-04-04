@@ -9,7 +9,7 @@ variable "bucket_name" {
 }
 
 variable "location" {
-  description = "R2 버킷 위치 (APAC, EEUR, ENAM, WEUR, WNAM)"
+  description = "R2 버킷 위치"
   type        = string
   default     = "APAC"
 }
@@ -39,19 +39,19 @@ variable "cors_expose_headers" {
 }
 
 variable "cors_max_age_seconds" {
-  description = "CORS preflight 캐시 시간 (초)"
+  description = "CORS preflight 캐시 시간"
   type        = number
   default     = 3600
 }
 
 variable "zone_id" {
-  description = "커스텀 도메인용 Cloudflare Zone ID"
+  description = "커스텀 도메인용 Zone ID"
   type        = string
   default     = null
 }
 
 variable "custom_domain" {
-  description = "R2 퍼블릭 액세스 커스텀 도메인 (예: cdn.fabbitinc.com)"
+  description = "R2 퍼블릭 액세스 커스텀 도메인"
   type        = string
   default     = null
 }

@@ -1,0 +1,7 @@
+{
+  "name": "fabbit-infra",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^4.80.0"
+  }
+}

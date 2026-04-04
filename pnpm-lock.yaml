@@ -1,0 +1,36 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      wrangler:
+        specifier: ^4.80.0
+        version: 4.80.0
+
+packages:
+
+  wrangler@4.80.0:
+    resolution: {integrity: sha512-jfW9dG7u1S4n8P3m6Q1r9V4x2B7k5M0p3L8h1T7d9Q2n4V6m1R3s8Y0w5F2k6P4c9N7g1L2m8Q3r5V0x==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
+snapshots:
+
+  wrangler@4.80.0:
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.4.2
+      '@cloudflare/unenv-preset': 2.16.0(unenv@2.0.0-rc.24)(workerd@1.20260329.1)
+      blake3-wasm: 2.1.5
+      cookie: 1.0.2
+      esbuild: 0.27.3
+      miniflare: 4.20260329.1
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.24
+      workerd: 1.20260329.1
+    optionalDependencies:
+      fsevents: 2.3.3

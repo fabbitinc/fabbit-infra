@@ -12,14 +12,12 @@ terraform {
   }
 }
 
-# Cloudflare R2 버킷 생성
 resource "cloudflare_r2_bucket" "this" {
   account_id = var.account_id
   name       = var.bucket_name
   location   = var.location
 }
 
-# S3 호환 API를 통한 CORS 설정
 resource "aws_s3_bucket_cors_configuration" "this" {
   provider = aws.r2
   bucket   = cloudflare_r2_bucket.this.name
@@ -35,7 +33,6 @@ resource "aws_s3_bucket_cors_configuration" "this" {
   depends_on = [cloudflare_r2_bucket.this]
 }
 
-# R2 커스텀 도메인을 통한 퍼블릭 액세스
 resource "cloudflare_r2_custom_domain" "this" {
   count       = var.custom_domain != null ? 1 : 0
   account_id  = var.account_id

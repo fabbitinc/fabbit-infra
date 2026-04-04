@@ -13,11 +13,10 @@ terraform {
   }
 }
 
-provider "aws" {
-  region = "ap-northeast-2"
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
-# R2 CORS 설정을 위한 S3 호환 API Provider
 provider "aws" {
   alias = "r2"
 
@@ -36,10 +35,7 @@ provider "aws" {
   region = "auto"
 }
 
-provider "cloudflare" {
-  api_token = var.cloudflare_api_token
-}
-
 locals {
-  project = "fabbit"
+  environment = "prod"
+  project     = "fabbit"
 }
