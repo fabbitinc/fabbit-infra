@@ -47,7 +47,6 @@ tofu apply
 - CloudFront는 legacy `forwarded_values` 대신 최신 cache policy를 사용합니다
 - `fabbit.app`와 `*.fabbit.app`는 같은 web distribution으로 연결합니다
 - `api.fabbit.app`는 wildcard 예외로 OCI Dokploy 서버 `193.122.102.209`를 가리킵니다
-- `live/prod/storage`는 별도 `app_zone_id` 없이 `fabbit_app_zone_id`를 재사용합니다
 - 반복 명령은 `Makefile`을 통해 실행합니다
 - `Makefile`은 루트 `.env`를 자동으로 읽습니다
 - remote backend와 lock table은 현재 사용하지 않습니다

@@ -30,6 +30,9 @@ plan-prod-edge:
 apply-prod-edge:
 	cd $(EDGE_DIR) && tofu apply
 
+destroy-prod-edge:
+	cd $(EDGE_DIR) && tofu destroy
+
 init-prod-storage:
 	cd $(STORAGE_DIR) && tofu init
 
@@ -38,6 +41,9 @@ plan-prod-storage:
 
 apply-prod-storage:
 	cd $(STORAGE_DIR) && tofu apply
+
+destroy-prod-storage:
+	cd $(STORAGE_DIR) && tofu destroy
 
 validate:
 	cd $(EDGE_DIR) && tofu init -backend=false && tofu validate

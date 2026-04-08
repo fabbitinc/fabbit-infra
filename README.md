@@ -45,8 +45,7 @@ infra/
 ### storage
 
 - 역할: Cloudflare R2
-- 리소스: R2 bucket, CORS, custom domain
-- `fabbit_app_zone_id`를 그대로 재사용합니다
+- 리소스: R2 bucket, CORS
 - 위치: [live/prod/storage](/Users/moonseongha/code/projects/fabbit/infra/live/prod/storage)
 
 ## 실행

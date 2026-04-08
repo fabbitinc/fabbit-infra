@@ -9,12 +9,6 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
-variable "fabbit_app_zone_id" {
-  description = "fabbit.app Cloudflare zone ID"
-  type        = string
-  default     = null
-}
-
 variable "r2_access_key_id" {
   description = "R2 Access Key ID"
   type        = string
@@ -31,10 +25,4 @@ variable "r2_cors_allowed_origins" {
   description = "CORS 허용 오리진"
   type        = list(string)
   default     = ["https://*.fabbit.app"]
-}
-
-variable "r2_custom_domain" {
-  description = "R2 커스텀 도메인"
-  type        = string
-  default     = "cdn.fabbit.app"
 }
