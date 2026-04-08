@@ -41,7 +41,6 @@ variable "price_class" {
 variable "api_origin_ip" {
   description = "api.fabbit.app이 가리킬 OCI 서버 공인 IP입니다."
   type        = string
-  default     = "193.122.102.209"
 }
 
 variable "tags" {
